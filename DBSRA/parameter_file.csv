@@ -1,0 +1,5 @@
+run,group,sci.name,common.name,species.code,exclude,age.mat,DCAC.start.yr,DCAC.end.yr,delta.yr,DBSRA.OFL.yr,M.est,SD.lnM,FMSYtoMratio,SD.FMSYtoMratio,Delta,SD.Delta,DeltaLowerBound,DeltaUpperBound,BMSYtoB0ratio,SD.BMSYtoB0ratio,BMSYtoB0LowerBound,BMSYtoB0UpperBound,random.seed
+1,Rockfish,Sebastes pinniger,Canary Rockfish,CNRY,0,8,1943,1999,2009,2009,0.08,0.4,0.8,0.1,0.6,0.1,0.01,0.99,0.4,0.05,0.05,0.95,4731
+2,Rockfish,Sebastes levis,Cowcod,CWCD,0,11,1901,1999,2009,2009,0.055,0.4,0.8,0.1,0.6,0.1,0.01,0.99,0.4,0.05,0.05,0.95,2699
+3,Rockfish,Sebastes crameri,Darkblotched Rockfish,DBRK,0,7,1943,1999,2009,2009,0.07,0.4,0.8,0.1,0.6,0.1,0.01,0.99,0.4,0.05,0.05,0.95,1786
+4,Rockfish,Sebastes alutus,Pacific Ocean Perch,POP,0,8,1956,1999,2009,2009,0.05,0.4,0.8,0.1,0.6,0.1,0.01,0.99,0.4,0.05,0.05,0.95,1460
