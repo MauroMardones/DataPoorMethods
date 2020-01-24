@@ -1,0 +1,58 @@
+# DATOS 
+
+# Loo   k       M     log_aw    bw     L50ms     bMS     h      
+41.15   0.27   0.30   -7.8      3.0     20      0.1     0.5
+
+# Loo, k: parametros de crecimiento
+# s1 y s2 paranetros de la funcion de desviacion estandard de la talla a la edad
+# M mortalidad natural
+# aw y bw parametros peso-talla
+# L50 talla de primera madurez
+# bMS=L95-L50. Pendiente de la ojiva de madurez
+# h es el steepness o pendiente de la relacion stock-recluta
+# dt_desove fraccion del año donde ocurre el desove
+
+# Numero de edades presentes (app) en los datos de capturas
+9
+
+# Edades (años)
+2 3 4 5 6 7 8 9 10
+
+# Numero de intervalos de tallas
+21
+
+#Talla y frecuencia de longitudes en la captura
+#------------------------------------------------------------------------------------
+20	21	22	23	24	25	26	27	28	29	30	31	32	33	34	35	36	37	38	39	40
+0	1	1	4	8	18	37	70	105	122	140	107	78	51	27	15	8	4	2	1	0
+
+# Parametros iniciales, coef. de variación y fases de estimación
+#------------------------------------------------------------------------------------
+# A50   rango     Fcr       Lo       s1       s2  
+  2      1       0.5        23     1E-10    0.05 # parámetro
+0.5    0.5      10.1      0.05      10.1     0.1 # coef. variación
+  2      2         3         4        4        4 # fase de estimacion (<0, no se estima)
+#------------------------------------------------------------------------------------
+#A50 es la edad aproximada a la talla de primera captura (app Lpromedio de la captura) 
+#rango es una medida de la inclinación de la selectividad. Mide el numero de edades entre A50 y A95 
+#Fcr valor de partida de la mortalidad por pesca
+#Lo es la talla modal del primer grupo de edad presente en las capturas. Se sugiere tomarlo desde el modelo de crecimiento
+#s1 y s2 son parámetros de la función de desviación de la talla a la edad s(talla)=s1+s2*Edad
+
+
+# PARA EVALUAR PBR---------------------
+
+# dt_desove   Número de BRP
+0.5           3
+
+# % de la biomasa virginal a evaluar (%Bo)
+0.2   0.4     0.6
+
+#----------otros settings---------------------------------
+500 # tamaño muestral log-verosimilitud multinomial
+1 # Estima(1) o simula(0)
+
+
+
+
+
