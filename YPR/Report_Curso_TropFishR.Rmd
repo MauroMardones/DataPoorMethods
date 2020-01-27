@@ -1,0 +1,97 @@
+---
+title: "Untitled"
+author: "Mauricio_Mardones"
+date: "21 de marzo de 2017"
+output: pdf_document
+---
+```{r}
+
+
+#____________________
+# Mortality rates
+#--------------------
+### Natural mortality
+require(TropFishR)
+getwd()
+setwd("C:/Users/mauricio.mardones/Documents/IFOP/Cursos/Curso TropFish_SantaMarta_2017/data")
+dir()
+load("lfq_list2.RData")
+str(lfq_list2)
+
+#Mortalidad natural con diferentes methodos
+
+Ms <- M_empirical(Linf = lfq_list2$Linf, K_l = lfq_list2$K,
+            tmax = lfq_list2$agemax, temp = 27.2,
+            method = c("Pauly_Linf", "Hoenig","Then_tmax", "Then_growth"))
+
+class(Ms)
+mean(Ms); sd(Ms)
+
+### Total Mortality
+# Beverton & Holt's method
+#catch column son las columnas en este caso meses
+Z_BevertonHolt(lfq_list2, catch_column = 1:8, Lprime_tprime = 40)
+
+
+
+# catch curve
+catchcurve<-catchCurve(param=lfq_list2, catch_column = 1:8, calc_ogive = T)
+catchcurve$Z
+catchcurve$confidenceInt
+
+### Fishing mortality
+
+# how to estimate the fishing mortality given M and Z?
+
+FMort<-catchcurve$Z-mean(Ms)
+#[1] 0.1403854
+
+
+
+#--------------------
+
+#____________________
+# Exploitation rate
+#--------------------
+#calcural la tasa de explotación
+FMort/catchcurve$Z
+#[1] 0.320379
+
+# add mortality parameters to list and save list
+#--------------------
+
+lfq_list2<- c(lfq_list2, c(FMort= FMort, Z= catchcurve$Z, Ms=mean(Ms)))
+
+lfq_list2
+
+save(lfq_list2, file = "lfq_list2a.Rdata")
+
+```
+
+```{r}
+
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
