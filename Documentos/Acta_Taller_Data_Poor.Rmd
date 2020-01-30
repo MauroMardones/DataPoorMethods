@@ -1,0 +1,77 @@
+---
+title: "Acta Taller DataPoor DER"
+author: "Grupo de Trabajo Data Poor"
+#date: "29-01-2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Fecha y Lugar
+
+27 y 28 de Enero del 2020
+
+Auditorio IFOP, Valparaiso, Chile
+
+## Participantes
+
+Grupo de investigadores del Departamento de Evaluación de Recursos
+
+## Contexto del Taller
+
+Las pesquerías con pocos datos incluyen aquellas con datos limitados (por ejemplo, tipo, cantidad, calidad) y/o capacidad (por ejemplo, investigación, institucional, financiación). Los métodos de evaluación de stock con poca información han sido objeto de una considerable actividad de investigación en los últimos años. También es probable que un número creciente de pesquerías con pocos datos requiera evaluación en el futuro, por ejemplo, debido a requisitos de políticas, una mayor consideración de las especies de captura incidental, una explotación creciente por parte de la pesca recreativa y reducciones continuas en los presupuestos de monitoreo. Varios métodos que se han propuesto requieren solo subconjuntos específicos de los datos que generalmente se requieren para una evaluación de stock más completa, reemplazando los datos faltantes con supuestos (o priors). Continúan proponiéndose nuevos métodos, mientras que los enfoques publicados continúan siendo evaluados, comparados y aplicados. A menudo se hace hincapié en los enfoques pragmáticos que hacen el mejor uso de la información disponible, pero el desafío es defenderlos como contribuciones válidas para la gestión sostenible de la pesca (Cope *et al*., 2020).
+
+En Chile, los requerimientos de asesoria para pesquerias emergentes ha ido increscendo, y este tipo de enfoques metodológicos ha sido mas intenso en los últimos años. El Instituto de Fomento Pesquero, a través del Deparateamento de Evaluación de Recursos, ha aplicado diferentes metodologias para diferentes pesquerías en los ultimos 10 años. 
+
+
+## Objetivos del taller
+
+1. Overview de los modelos con enfoque para pesquerías limitadas en datos
+2. Identificar el set de modelos usados por el DER en los últimos años.
+3. Evaluar supuestos y criterios utilizados en este tipo de análisis.
+4. Revisión de modelos subyacentes y algoritmos utilizados por cada caso
+5. Discutir respecto a los alcances que tiene el uso de este tipo de enfoques para la administración pesquera en Chile.
+
+\newpage
+
+
+## Sesiones presentadas
+
+1. Marco teórico y estado del arte Data Poor models (Mauricio Mardones)
+2. Erizo. Modelo basado en tallas (M. Mardones) 
+3. Sardina Austral Catch Only (Elson leal)
+4. Crustáceos Modelo basado en Tallas (Alejandro Yañez) 
+5. Condrictios Catch Only (Ma Cristina Perez) 
+6. Algas. Catch only (Alejandro Roldan) 
+7. Juliana Catch Only (Carlos Techeira) 
+8. Discusión General 
+
+
+
+## Conclusiones Taller Data Poor
+
+1. Previo a la aplicación de cualquier modelo del nivel Tier 3, se debe generar un modelo conceptual consistente y riguroso, que permita identificar, entre otras cosas, la dinámica de la población, lo cual es importante para decidir, que tipo de modelos se pueden aplicar.
+
+2. Reclasificación y consideración de los modelos referidos al Tier 3, en términos de incorporar explícitamente los que han sido desarrollados en los años recientes, como por ejemplo, los basados en la estructuras de tallas para el calculo del potencial reproductivo (SPR), modelos cualitativos (ej, PSA) y otros, que no fueron considerados en la primera revisión de Paya *et al*. (2014).
+
+3. Consideraciones sobre PBRs para este tipo de modelos. Mientras los métodos basados en series de capturas estiman directamente el RMS, los Length Based calculan un proxy del RMS que en este caso es el SPR dependiendo de cada recurso.Por esta razón, es nescesario revisar la estimación del RMS o definir un ponderador del mismo en función del enfoque precautorió dado la incertidumbre asociada a los supuestos y datos utilizados. El RMS se calcula solo una vez o se reestima en cada actualización. Esto se redefinirá en el próximo taller de PRBs.
+
+4. Se eleva la pregunta sobre si los modelos de producción, modelos de data poor, en donde se concluye que es pertinente siu clasificación en el Tier 2, por ende, no serian considerados en esta revisión, a pesar de que el uso de modelos basados en capturas contienen de forma subyacente otros modelos, como los de biomasa dinamica y de rendimientos por recluta.
+
+5. la comparación de los modelos no se debe realizar en función de los parametros o variables estimada. Para ello, se debe conocer el desempeño de los modelos  con respecto a diferentes condiciones de la población o de la dinámica, por ejemplo;
+- Rasgos de HV
+- Estado e explotación
+- Propiedades de los datos
+
+6. El desempeño de los modelos debe ser evaluado en función del error relativo y sesgo frente a las condiciones anteriormente descritas a traves de un Modelo Operativo.
+
+7. Cualquier recomendación que se haga en función de modelos de data poor, tienen que transmitir el mensaje que es el inicio de un protocolo de evaluación y que debería manifestar la problemática de los diseños de monitoreo, los cuales de deben mejorar para ir complejizando el proceso de evaluación.
+
+
+## Compromisos futuros
+
+Desarrollar un esquema de trabajo por recurso que analicé las piezas de información disponible y validez de la data, para luego abordar conceptualmente uno u otro modelo. 
+
+Establecer un esquema para evualuar el desempeño de los modelos. Un trabajo basado en modelos de capturas y otro de length based (Almeja; ModactII, LIME, LBSPR)
