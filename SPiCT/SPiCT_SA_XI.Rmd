@@ -1,0 +1,357 @@
+---
+title: "Aplicación de Stochastic Production Model in Continuous Time (SPiCT) (Pedersen et al., 2017) en Sardina Austral de la XI Región"
+author: "Mardones, M., Zúñiga, MJ., Pérez, MC"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: pdf_document
+toc: TRUE
+---
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "  ", fig.align = 'center', cache=FALSE)
+library(knitr)
+library(tidyverse)
+```
+
+\pagebreak
+
+
+# Breve descripción del keystone paper (Pedersen & Berg, 2016)
+
+Este documento provee una guía (casi traducida de Pedersen et al.,2017) para el uso del modelo de producción estatocastico contrinuo en tiempo (SPiCT) y que está dividido en tres partes 
+
+Este es un documento vivo que estará en permanente cambio.  Todos los avances y actualizaciones  pueden ser seguidas y obtenidas de https://github.com/DTUAqua/spict/commits/master. El SPiCT packahe esta siendo activamente actualizado y se pueden reportar errores aquí: https://github.com/DTUAqua/spict/releases.
+
+
+
+El modelo de excedente de producción tiene una larga historia como método para manejar las poblaciones de peces con datos limitados. Los avances recientes han arrojado modelos de producción excedente como modelos de espacio de estado que separan la variabilidad aleatoria de la dinámica del stock del error en los índices observados de biomasa. Pedersen & Berg (2016) presentan un modelo de producción excedente estocástico
+en tiempo continuo (SPiCT), que además de la dinámica del stock también modela la dinámica de las pesquerías. Esto permite que el error en el proceso de captura se refleje en la incertidumbre de los parámetros estimados del modelo y las cantidades de manejo.
+
+
+La formulación del modelo de espacio de estado de tiempo continuo incluye la capacidad de proporcionar estimaciones de biomasa explotable y mortalidad por pesca en cualquier momento a partir de datos muestreados a intervalos arbitrarios y posiblemente irregulares. 
+
+Esta guía es un ejemplo de applicación del modelo con los datos de la librería y también propone utilizar datos propios.
+
+\pagebreak
+
+# Principales supuestos y requerimiento de datos para SPiCT.
+
+- Serie de tiempo en dato que contenga cambios forzantes en la población
+
+- Contraste en los datos (Hilborn & Walters, 1989)
+
+-Extreme observations or outliers in index and catch are commonly encountered problem in fisheries data (Chen et al. 1994).
+
+\pagebreak
+
+# Carga de librerias necesarias.
+
+Lo primero es cargar TMB usando el GitHub usando devtools Package. Aqui se explica como; (https://github.com/kaskr/adcomp/wiki/Download)
+
+
+```{r  eval=FALSE}
+install.packages("devtools")
+install.packages("TMB")
+#si hay problemas, instalarlo desde el github
+devtools::install_github("kaskr/adcomp", subdir = "TMB")
+```
+
+Una vez cargado eso se llama de la misma forma al SPiCT package
+
+```{r eval=FALSE, echo = TRUE, warning = FALSE, message = FALSE}
+devtools::install_github("DTUAqua/spict/spict")
+#devtools::install_github("DTUAqua/spict/spict", ref = "1.2.8")
+# aqui algunas dependencias tambien necesitan ser instaladas
+install.packages("Rcpp")
+install.packages("ellipse")
+```
+
+Aqui a veces hay problemas para acceder a GitHub por problemas en las credenciales. Para ello se debe obtener un token de GitHub (deben tener una cuenta) y hacer un proceso como lo planteado acá: https://www.r-bloggers.com/using-travis-make-sure-you-use-a-github-pat/
+
+
+Una vez solucianando e instalnando dependencias, llamamos las librerias:
+
+```{r eval=T, echo = TRUE, warning = FALSE, message = FALSE}
+library(usethis)
+library(devtools)
+library(ellipse)
+library(spict) #comprobar esta versión de spict_v1.2.8
+library(tidyverse)
+library(patchwork)
+```
+
+\pagebreak
+
+# Main assumptions and input data for SPiCT
+
+- Catch data should be representative of both landings and bycatch. It is also
+possible to use landings only, but then the interpretation of the results
+changes. If available, seasonal catches should be used as input. Catches are
+assumed to be taken over a time interval (e.g. years or quarters), thus the
+associated time vector in SPiCT `inp$timeC` should reflect the beginning of each
+catch interval (e.g. 2002.25 and 2002.75 for the second and fourth quarter
+catches, respectively). Additionally, the vector `inp$dtc` should reflect the
+length of each time interval (e.g. 1 for annual and 0.25 for quarterly catches,
+respectively).
+
+- Stock size indices should be in terms of biomass (not numbers) and
+representative of the part of the stock vulnerable to the commercial fleets, the
+so called exploitable stock biomass (ESB). In many cases, the gear selectivity
+of the commercial and scientific fleets do not coincide and thus the stock size
+indices have to be corrected to exclude individuals that are not represented in
+the commercial fleets.
+
+- Biomass indices are assumed to be snapshots at given points in time.
+Therefore, the timing of survey indices `inp$timeI` has to be given as decimal
+years reflecting the timing of the survey (e.g. 1995.5 for the middle of the
+year). The timing of the survey will be matched to the closest model time which
+is dependent on `inp$dteuler` (see below). Commercial CPUE index should be
+associated with the midpoint of the interval of the corresponding catches, i.e.
+middle of the year if they are based on yearly aggregated catches and effort.
+
+\pagebreak
+
+# Incorporando la propia data
+
+
+Leo el directorio donde contengo los datos. Si estoy trabajando en el proyecto solo vizualisto con `list.file()```
+```{r eval=F}
+getwd()
+setwd('~')
+```
+
+Usaré el ejemplop de datos de erizo de la zona X Norte. Este ejemplo no tiene mucho contraste de datos y veremos los problemas que ello acarrea.
+
+Puedo tener un .txt ó un .csv pero deben ser transformados en formato lista.
+
+```{r}
+sauxi <- read.table("Data_SAus_XI_2021.txt", sep="", header = T)
+
+#un plot simple de indice y desembarque
+```
+
+
+```{r, fig.width=3, fig.height=2}
+bro <- ggplot(sauxi,aes(timeC,obsC))+ 
+  geom_bar(stat="identity", fill="gray")+ 
+  ylim(0, 8200) +  
+  xlab("") + 
+  ylab("Desembarque (t.)")+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  scale_x_continuous(breaks = seq(from = 2006, to = 2020, by = 2))
+bro
+```
+
+
+Convierto los datos como lista para ser lidos por las funciones del SPiCT
+```{r}
+sauxi <- as.list(sauxi)
+#compruebo
+class(sauxi)
+```
+
+Primero un vistazo a mis datos y compruebo el contraste, el que desde tya nos dirá que tan robusta es la estimación.
+
+Tenga en cuenta que los datos están estructurados como una lista que contiene las entradas obsC (observaciones de captura), timeC (tiempo de oservaciones de captura), obsI (índice de observaciones) y timeI (tiempo de observaciones de índice). Si no se especifican los tiempos
+se supone que la primera observación se observa en el tiempo 1 y luego secuencialmente en adelante con un paso de tiempo deun año. Por lo tanto, se recomienda especificar siempre los tiempos de observación
+
+
+## Ploteando Data de Sardina Austral en la XI
+
+```{r fig.width=8, fig.height=5}
+plotspict.data(sauxi)
+```
+
+Además, el color de los puntos individuales muestra cuándo se realizó la observación en algun mes y se muestran los colores correspondientes en la leyenda de color en la esquina superior derecha. Con fines ilustrativos, intentemos cambiar un poco los datos. 
+
+```{r}
+inpshift <- sauxi
+inpshift$timeC <- inpshift$timeC + 0.3 #April
+inpshift$timeI <- inpshift$timeI + 0.8 #August
+plotspict.data(inpshift)
+```
+
+
+
+```{r fig.width=5, fig.height=5}
+plotspict.ci(sauxi)
+```
+Las dos gráficas superiores provienen de plotspict.data, con la línea horizontal discontinua que representa una suposición de RMS. Esta suposición proviene de una regresión lineal entre el índice y la captura dividida por el índice (fila central,
+izquierda). Se espera que esta regresión tenga una pendiente negativa. Se puede hacer una gráfica similar mostrando captura versus catch / index (fila central, derecha) para encontrar aproximadamente el esfuerzo óptimo (o proxy de esfuerzo). El proporcional el aumento en el índice en función de la captura (fila inferior, derecha) debería mostrar incrementos principalmente positivos en índice de capturas bajas y viceversa. 
+
+
+
+## Ahora aplico el modelo
+```{r warning=F}
+resau <- fit.spict(sauxi)
+```
+
+
+```{r fig.width=4, fig.height=3, warning=F}
+plot(resau)
+```
+
+Los plot pueden ser explicados como sigue;
+
+- Estimates (biomass, fishing mortality, catch, production) are shown using blue lines.
+- 95% CIs of absolute quantities are shown using dashed blue lines.
+- 95% CIs of relative biomass and fishing mortality are shown using shaded blue regions.
+- Estimates of reference points (BMSY , FMSY , MSY ) are shown using black lines.
+- 95% CIs of reference points are shown using grey shaded regions.
+- The end of the data range is shown using a vertical grey line.
+- Predictions beyond the data range are shown using dotted blue lines.
+- Data are shown using points colored by season. Different index series use different point characters (not shown here)
+
+(Revisar guía Pedersen & Berg, 2017)
+
+Cada uno de los plot se pueden sacar por separado
+
+
+
+```{r fig.width=4, fig.height=3, warning=F}
+a <-plotspict.bbmsy(resau)
+ab <-  plotspict.ffmsy(resau)
+b<- plotspict.biomass(resau, ylim=c(0, 8000))
+d <-  plotspict.fb(resau, ylim=c(0, 5), xlim=c(0, 10000))
+da <- plotspict.production(resau)
+c <- plotspict.f(resau)
+#puedo hacer un layout con los graficos que quiera informar con Patchwork
+a+b+c
+```
+
+\pagebreak
+
+# Interpretando los resultados
+```{r, warning=F}
+capture.output(summary(resau))
+```
+
+Línea 1: Convergencia del ajuste del modelo, que tiene el código 0 si el ajuste fue exitoso. Si este no es el caso
+no se obtuvo convergencia y los resultados informados no deben utilizarse. En caso de no convergencia, los resultados se seguirán informando para ayudar al diagnóstico del problema.
+
+
+### Diagnostico y residuos
+
+Antes de proceder con los resultados para una evaluación, es muy importante que los residuos del modelo se verifican y se identifican posibles deficiencias del modelo. 
+
+Los residuos se pueden calcular usando `calc.osa.resid ()`.
+
+OSA significa un paso adelante, que son los residuos adecuados para los modelos de espacio de estado. Más información sobre los residuos de OSA está contenido en Pedersen y Berg (2017). 
+
+```{r eval=F, fig.width=3, fig.height=5}
+resiaus <- calc.osa.resid(resau)
+plotspict.diagnostic(resiaus)
+```
+
+\pagebreak
+
+
+## Extrear parametros estimados
+
+Lo primero es ver los  estimados en una lista
+
+```{r}
+list.quantities(resau)
+```
+
+Ahora los saco por separado
+```{r}
+get.par('MSY', resau)
+```
+
+```{r}
+get.par('logBmsy', resau)
+```
+
+Y a su vez puedo pedir el dato absoluto con exp=T
+
+```{r}
+get.par('logBmsy', resau, exp=TRUE)
+```
+```{r}
+get.par('logbkfrac', resau, exp=TRUE)
+
+```
+```{r}
+get.par('K', resau, exp=TRUE)
+```
+\pagebreak
+
+# Analisis retrospectivo
+
+Evaluar robustez de la estimaciòn. En este caso será para 10 años.
+
+De forma predeterminada, retro crea 5 escenarios con series de tiempo de captura e índice que se acortan del 1 al 5 al final observaciones.
+
+```{r, warning=F}
+retrosau <- retro(resau, nretroyear = 4)
+plotspict.retro(retrosau)
+```
+\pagebreak
+
+# Escenarios de Manejo
+
+El paquete tiene una función que ejecuta varios escenarios de gestión predefinidos, que se pueden presentar en un tabla de predicción. Para realizar los cálculos necesarios para producir la ejecución de la tabla de pronóstico:
+
+```{r , warning=F}
+manesau <- manage(resau)
+```
+
+
+Puedo ver los resultados en la tabla con `mansummary`
+```{r warning=F}
+mansummary(manesau)
+```
+
+Ploteo de escenarios
+
+```{r, warning=F}
+plotspict.bbmsy(manesau)
+plotspict.ffmsy(manesau)
+plotspict.catch(manesau)
+plotspict.fb(manesau)
+```
+\pagebreak
+
+# Fijando parametros
+
+Los parámetros del modelo se pueden fijar usando fases como se describió anteriormente. Esta técnica, sin embargo, solo se utiliza para fijar parámetros del modelo y, por lo tanto, no cantidades derivadas como logalpha, logr (que se deriva de logK, logm y logn). La fijación de un parámetro puede considerarse como una imposición de un carácter altamente informativo antes del parámetro. 
+
+Identifico los parametros que se pueden setear. Tambien es posible fijar fases de estimaciòn.
+
+```{r}
+list.possible.priors()
+```
+
+
+
+```{r fig.width=8, fig.height=7, warning=F}
+inp <- sauxi
+inp$priors$logn <- c(log(5), 1e-3)
+inp$priors$logalpha <- c(log(2), 1e-3)
+inp$priors$logbeta <- c(log(2), 1e-3)
+resaufix <- fit.spict(inp)
+plot(resaufix)
+capture.output(summary(resaufix))
+
+```
+
+\pagebreak
+
+# Brechas analíticas
+
+- Como se estima F, m.?
+
+- Como se condicionan las priors?
+
+- predicciones. Identificar condiciones sobre las cuales se generan, por ejemplo, capturas, F , B, etc.
+
+- Identificar claramente los escenarios por default
+
+- Simular datos para testear
+
+- Usar mas de un indice, incluso se puede usar el esfuerzo como indice
+
+- Datos estacionales
+
+-
