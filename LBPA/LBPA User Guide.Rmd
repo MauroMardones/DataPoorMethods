@@ -1,0 +1,335 @@
+---
+title: "Guide to aplication of LBPA in data-limited fisheries situations"
+subtitle: "Length Based Pseudo-Cohort Analysis LBPA"
+author: "Canales, C.M., Punt, A.E., Mardones, M."
+date: '`r format(Sys.Date(), "%d-%m-%Y")`'
+output: pdf_document
+toc: TRUE
+---
+
+```{r setup, include=FALSE, warning=FALSE, error=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(patchwork)
+library(knitr)
+```
+
+\pagebreak
+
+# Introduction
+
+This guide contains functions to compile and run the Length-based PseudoCohort Analysis (LBPA) fisheries stock assessment method in data limited conditions
+
+This model is an estimation model by fitting to length composition data to estimate annual fishing mortality, annual recruitment and spawning potential ratio (SPR). LBPA was published in Fisheries Research 234C (2021) https://doi.org/10.1016/j.fishres.2020.105810.
+
+LBPA was developed for data-limited fisheries, where few data are available other than a representative sample of the size structure of the vulnerable portion of the population (i.e., length composition data from the catch) and an understanding of the life history of the species.
+
+# Basic functionality
+
+The LBPA model is built based on a C++ language programmed in ADMB, and below we provide the steps to compile and build from a simple code implemented in R that had next step.
+
+To do this, you must have installed the ADMB version (12 or newer). Can download in this site: <http://www.admb-project.org/>
+
+The LBPA model and data example can be obtained from <https://github.com/criscan/LBPA>
+
+
+### Bug Reports
+Alert to any bugs or issues by using GitHub. Suggestions and comments for additional features are welcome and we can discuss via email at
+
+# Step 1
+
+## Set working directory
+
+In this folder you need put two files, .tpl and .dat to run LBPA estimation model 
+
+```{r echo=FALSE, eval=TRUE}
+rm(list=ls(all=TRUE))  # Borra todas los objetos creados
+setwd('~/IFOP/Escritos/LBPA/LBPA_Guide')
+```
+
+```{r echo=TRUE, eval=FALSE}
+rm(list=ls(all=TRUE))  # erasure all objects
+setwd('~/')
+```
+
+Once you have defined your working directory, you can take a look and check the contains files.
+
+```{r eval=FALSE, echo=TRUE}
+dir()
+```
+
+\pagebreak
+
+# Step 2
+
+## Run model
+
+Now we compile it in ADMB set. If you have read it, don't need run again:
+
+```{r, warning=FALSE, eval=FALSE, echo=TRUE}
+system('~/admb-12.2/admb LBPA')
+```
+
+Now you need run the model with console. The *system* function could run *.tpl* code from R.
+
+```{r, warning=FALSE, eval=FALSE, echo=TRUE, message=FALSE}
+system('./LBPA')
+```
+
+\pagebreak
+
+# Step 3
+
+## Read Report
+To read report (.rep) is necessary to get a function to can read report. This function is hold in the same folder than .tpl and .dat.
+
+```{r echo=FALSE, eval=TRUE}
+source('~/IFOP/Escritos/LBPA/LBPA_Guide/read.admb.R')
+```
+
+```{r echo=TRUE, eval=FALSE}
+source('~/read.admb.R')
+```
+
+Once run our LBPA model, we can read report with *read.rep()* function.
+```{r echo=TRUE, eval=TRUE, message=FALSE}
+data <-read.rep('LBPA.rep')
+```
+
+In data example we have a set data from fishery monitoring. You can set you own data relative to your stock in the *.dat* hosted in the github repository
+
+Now, can read data all variables in your **.rep* file.
+
+```{r echo=FALSE}
+names(data)
+```
+
+Setting of different variables names to produce complementary plots;
+
+```{r}
+age      <- seq(1,10) #this age depend of your specie
+BinLen   <- data$Length_bins
+NObsFre  <- length(data$Observed_frequencies[,1]) #this numbers of observations depend of the own data
+ObsFre   <- data$Observed_frequencies
+PredFre  <- data$Predicted_frequency 
+CatchLFre<- data$Catch_length_frequency 
+ProbLen  <- data$Probability_of_length
+Nage     <- length(data$Probability_of_length[,1])
+```
+
+\pagebreak
+
+Lets plot length structure from data and get a plot from all length set data available;
+
+
+```{r eval=FALSE, echo=FALSE, fig.align="center", fig.cap= "Set of Length data with model fit"}
+par(mfrow=c(3,3),mar=c(3,4,1,1)+1)
+for(i in 1:9){
+    plot(BinLen, ObsFre[i,],type="s", xlab="mm.", ylab="Lenght Density") 
+    lines(BinLen, PredFre, type="l", col=2)
+ }
+```
+
+
+
+
+```{r, echo=TRUE, fig.align="center", fig.cap= "Length frequencies of catches (red lines) and predicted values by LBPA model (black line)"}
+
+plot(BinLen, PredFre,type="l", ylab="Frequency", 
+     xlab="Length", lwd=2.3, ylim=c(0, max(ObsFre)))
+for (i in 1:NObsFre) {
+  lines(BinLen, ObsFre[i,], type="l", col=2)
+}
+
+```
+
+Catch at length
+
+```{r eval=FALSE}
+par(mfrow=c(3,4),mar=c(3,4,1,1)+1)
+for(i in 1:10){
+  plot(BinLen ,CatchLFre[i,],ylab="",
+       xlab="Length",type="h",lwd=2, col="gray",
+       xlim = c(20,100))
+}
+
+```
+
+
+
+\pagebreak
+
+# Step 4
+
+## Plotting variables used in LBPA method
+
+Now we plot different variables, as lengths, adjust models, fishing mortality, selectivity, maturity ogive and SPR.
+
+
+```{r, eval=TRUE, echo=FALSE}
+
+Length      <- (data$Age_Length_s.e_N_Catch_Selectivity_F_Weight_Maturity[,2])
+SE          <- (data$Age_Length_s.e_N_Catch_Selectivity_F_Weight_Maturity[,3])
+Population  <- (data$Age_Length_s.e_N_Catch_Selectivity_F_Weight_Maturity[,4])
+Catch       <- (data$Age_Length_s.e_N_Catch_Selectivity_F_Weight_Maturity[,5])
+Selec       <- (data$Age_Length_s.e_N_Catch_Selectivity_F_Weight_Maturity[,6])
+Fm          <- (data$Age_Length_s.e_N_Catch_Selectivity_F_Weight_Maturity[,7])
+Weight      <- (data$Age_Length_s.e_N_Catch_Selectivity_F_Weight_Maturity[,8])
+Mat         <- (data$Age_Length_s.e_N_Catch_Selectivity_F_Weight_Maturity[,9])
+```
+
+
+```{r ,  fig.cap="Variables used in LBPA estimation model", fig.height=8}
+l <- ggplot(data=NULL, aes(x=age))+
+  geom_line(aes(y = Length))+
+  scale_x_continuous(breaks = seq(from = 0, to = 10, by = 1))+
+  xlab("Relative Age")+
+  theme_bw()
+se <- ggplot(data=NULL, aes(x=age))+
+  geom_line(aes(y = SE))+
+  scale_x_continuous(breaks = seq(from = 0, to = 10, by = 1))+
+  xlab("Relative Age")+
+  theme_bw()
+fm  <- ggplot(data=NULL, aes(x=age))+
+  geom_line(aes(y = Fm))+
+  scale_x_continuous(breaks = seq(from = 0, to = 10, by = 1))+
+  xlab("Relative Age")+
+  theme_bw()
+pop <- ggplot(data=NULL, aes(x=age))+
+  geom_line(aes(y = Population))+
+  scale_x_continuous(breaks = seq(from = 0, to = 10, by = 1))+
+  xlab("Relative Age")+
+  theme_bw()
+ct <- ggplot(data=NULL, aes(x=age))+
+  geom_line(aes(y = Catch))+
+  scale_x_continuous(breaks = seq(from = 0, to = 10, by = 1))+
+  xlab("Relative Age")+
+  theme_bw()
+sel <- ggplot(data=NULL, aes(x=age))+
+  geom_line(aes(y = Selec))+
+  scale_x_continuous(breaks = seq(from = 0, to = 10, by = 1))+
+  xlab("Relative Age")+
+  theme_bw()
+we <- ggplot(data=NULL, aes(x=Length))+
+  geom_line(aes(y = Weight))+
+  theme_bw()
+mat <- ggplot(data=NULL, aes(x=Length))+
+  geom_line(aes(y = Mat))+
+  theme_bw()
+
+l/se/fm/pop|ct/sel/we/mat
+```
+
+\pagebreak
+
+Some plot about proportion in Maturity and Selectivity at lentgh.
+
+
+```{r echo=FALSE}
+SeLength <- data$Selectivity_and_maturity_at_length [1,]  
+MaLength <- data$Selectivity_and_maturity_at_length [2,]  
+```
+
+
+```{r fig.cap="Maturity and Selectivity at Length", fig.height=4}
+SeMaLe <- ggplot(data=NULL, aes(x=BinLen))+
+  geom_line(aes(y = SeLength, colour = 'Selectivity'),  size = 1)+
+  geom_line(aes(y = MaLength, colour = 'Maturity'), linetype = 2, size = 1)+
+  scale_color_manual(name = '',
+                     values = c('red1', 'black'),
+                     limits = c('Selectivity', 'Maturity'),
+                     breaks = c('Selectivity', 'Maturity')) +
+  theme(legend.position = 'bottom') + ylab('Proportion') + xlab('Length') +
+  scale_x_continuous(breaks = seq(from = 20, to = 94, by = 4))+
+  scale_y_continuous(breaks = seq(from = 0, to = 1, by = 0.1))+
+  theme_bw()
+
+SeMaLe
+```
+
+
+
+\pagebreak
+
+###  Estimate Length current, objective and expected
+
+This plot represent length structure estimated by LBPA in each conditions: length current, target and unfished
+
+```{r}
+L1 <- (data$Length_frequency_of_exploitable_population_current_target_unfished[1,])
+L2 <- (data$Length_frequency_of_exploitable_population_current_target_unfished[2,])
+L3 <- (data$Length_frequency_of_exploitable_population_current_target_unfished[3,])
+```
+
+
+```{r echo=FALSE, fig.cap="Outputs of different relative Length estimated in LBPA" }
+L123 <- ggplot(data=NULL, aes(x=BinLen))+
+  geom_line(aes(y = L1, colour = 'Current'),  size = 1)+
+  geom_line(aes(y = L2, colour = 'Target'), size = 1)+
+  geom_line(aes(y = L3, colour = 'Unfished'), size = 1)+
+  scale_color_manual(name = '',
+                     values = c('red1', 'gold2', 'green'),
+                     limits = c('Current', 'Target','Unfished'),
+                     breaks = c('Current', 'Target','Unfished')) +
+  theme(legend.position = 'bottom') + ylab('Relative Frecuency') + xlab('Length (mm.)') +
+  theme_bw()
+L123
+```
+
+### Table of estimated parameters of LBPA model;
+
+```{r error=FALSE, warning=FALSE}
+tabla <- matrix(ncol=1, round(data$F_L50_slope_a0_cv_Lr_Ftar, 2))
+rownames(tabla) <- c("F Current", "L50", "Slope", "a0", "cv", "Lr", "F Target")
+kable(tabla)
+```
+
+
+\pagebreak
+# Step 5
+
+## SPR and YPR analisys.
+
+Assign value of PBR to add plot, in this case; F/Ftar, SPR and SPR Target
+
+```{r}
+F_FTar <- (data$`F/Ftar_SPR_SPRtar`[1])
+SPR <- data$`F/Ftar_SPR_SPRtar`[2]
+SPR_Tar <- data$`F/Ftar_SPR_SPRtar`[3]
+```
+
+
+```{r echo=FALSE}
+YPR <- as.data.frame(data$`F_Y/R_SSB/R`)
+YPR1 <- YPR %>% 
+  mutate(RSSB=YPR[,2]/max(YPR[,2])) %>% 
+  mutate(R= YPR[,3]/max(YPR[,3]))
+```
+
+YPR Plot with PBR estimated in LBPA model
+
+```{r  fig.cap="Yield and Spawning Biomass-per-recruit as a function of fishing mortality" }
+ypr <- ggplot(data=YPR1, aes(x=YPR[,1]))+
+   geom_line(aes(y = YPR1$RSSB, colour = 'YPR'))+
+   geom_line(aes(y = YPR1$R, colour = 'SPR'))+
+   geom_hline(aes(yintercept = SPR_Tar,linetype = "SPR Target "), colour= 'black') +
+   geom_vline(aes(xintercept = SPR, linetype = "SPR"), colour= 'black') +
+   scale_color_manual(name = '',
+                      values = c('red1', 'gold1'),
+                      limits = c('YPR', 'SPR'),
+                      breaks = c('YPR', 'SPR')) +
+   scale_linetype_manual(name = "PBR", values = c(3, 2), 
+                      guide = guide_legend(override.aes = list(color = c('black','black'))))+
+   scale_x_continuous(breaks = seq(from = 0, to = 1.4, by = 0.1))+
+   scale_y_continuous(breaks = seq(from = 0, to = 1, by = 0.1))+
+   geom_text(x=1, y=0.7, label="F/F Target = 1.48")+
+   ylab('SPR, YPR') + xlab('Fishing Mortality') +
+   theme_light()
+ypr
+
+
+```
+
+
+
+
